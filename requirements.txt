@@ -1,0 +1,4 @@
+pandas >= 0.22
+frozendict >= 1.2
+d3m
+scikit-learn
