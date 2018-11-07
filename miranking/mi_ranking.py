@@ -20,7 +20,7 @@ class Hyperparams(hyperparams.Hyperparams):
     target_col_index = hyperparams.Hyperparameter[typing.Optional[int]](
         default=None,
         semantic_types=['https://metadata.datadrivendiscovery.org/types/ControlParameter'],
-        description='Index of source vector column'
+        description='Index of target feature to rank against.'
     )
 
 
@@ -32,7 +32,7 @@ class MIRankingPrimitive(transformer.TransformerPrimitiveBase[container.DataFram
     target.  Will rank any feature column with a semantic type of Float, Boolean,
     Integer or Categorical, and a corresponding structural type of int or float.
     A DataFrame containing (col_idx, col_name, score) tuples for each ranked feature
-    will be returned to the caller.  Features that could not be rankied are excluded
+    will be returned to the caller.  Features that could not be ranked are excluded
     from the returned set.
     """
 
@@ -66,7 +66,7 @@ class MIRankingPrimitive(transformer.TransformerPrimitiveBase[container.DataFram
             'keywords': ['vector', 'columns', 'dataframe'],
             'source': {
                 'name': 'Uncharted Software',
-                'contact': 'mailto:chris.bethune@uncharted.software'
+                'contact': 'mailto:cbethune@uncharted.software'
             },
             'installation': [{
                 'type': metadata_base.PrimitiveInstallationType.PIP,
@@ -164,7 +164,7 @@ class MIRankingPrimitive(transformer.TransformerPrimitiveBase[container.DataFram
         data = self._append_rank_info(inputs, data, ranked_features_np, feature_df)
 
         cols = ['idx', 'name', 'rank']
-        results = pd.DataFrame(data=data, columns=cols)
+        results = container.DataFrame(data=data, columns=cols)
         results = results.sort_values(by=['rank'], ascending=False).reset_index(drop=True)
 
         # wrap as a D3M container - metadata should be auto generated
@@ -190,8 +190,11 @@ class MIRankingPrimitive(transformer.TransformerPrimitiveBase[container.DataFram
         inputs_metadata = typing.cast(metadata_base.DataMetadata, arguments['inputs'])
 
         # make sure target column is discrete or continuous (search if unspecified)
-        vector_col_index = hyperparams['target_col_index']
+        target_col_index = hyperparams['target_col_index']
         if target_col_index is not None:
-            return cls._can_use_column(inputs_metadata, vector_col_index)
+            can_use_column = cls._can_use_column(inputs_metadata, target_col_index)
+
+        if not can_use_column:
+            return None
 
         return inputs_metadata
