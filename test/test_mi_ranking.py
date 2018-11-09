@@ -3,6 +3,7 @@ from os import path
 import csv
 import typing
 import pandas as pd
+import numpy as np
 
 from d3m import container
 from d3m.primitives.distil import MIRanking
@@ -120,7 +121,25 @@ class MIRankingPrimitiveTestCase(unittest.TestCase):
         dataframe.metadata = dataframe.metadata.\
             add_semantic_type((metadata_base.ALL_ELEMENTS, 5), 'http://schema.org/Integer')
 
+        # set the roles
+        for i in range(1, 6):
+            dataframe.metadata = dataframe.metadata.\
+                add_semantic_type((metadata_base.ALL_ELEMENTS, i),
+                                  'https://metadata.datadrivendiscovery.org/types/Attribute')
+
+        # handle the missing data as a NaN
+        dataframe = dataframe.replace(r'^\s*$', np.nan, regex=True)
+
+        # cast the dataframe to raw python types
+        dataframe['d3mIndex'].astype(int)
+        dataframe['alpha'].astype(int)
+        dataframe['bravo'].astype(float)
+        dataframe['charlie'].astype(int)
+        dataframe['delta'].astype(str)
+        dataframe['echo'].astype(float)
+
         return dataframe
+
 
 if __name__ == '__main__':
     unittest.main()

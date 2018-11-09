@@ -47,6 +47,11 @@ class MIRankingPrimitive(transformer.TransformerPrimitiveBase[container.DataFram
         'http://schema.org/Float',
     )
 
+    _roles = (
+        'https://metadata.datadrivendiscovery.org/types/Attribute',
+        'https://metadata.datadrivendiscovery.org/types/SuggestedTarget',
+    )
+
     _structural_types = set((
         int,
         float
@@ -87,9 +92,9 @@ class MIRankingPrimitive(transformer.TransformerPrimitiveBase[container.DataFram
         column_metadata = inputs_metadata.query((metadata_base.ALL_ELEMENTS, column_index))
 
         valid_struct_type = column_metadata.get('structural_type', []) in cls._structural_types
-
         semantic_types = column_metadata.get('semantic_types', [])
         valid_semantic_type = len(set(cls._semantic_types).intersection(semantic_types)) > 0
+        valid_role_type = len(set(cls._roles).intersection(semantic_types)) > 0
 
         return valid_struct_type and valid_semantic_type
 
@@ -120,17 +125,23 @@ class MIRankingPrimitive(transformer.TransformerPrimitiveBase[container.DataFram
         semantic_types = inputs.metadata.query_column(target_idx)['semantic_types']
         discrete = len(set(semantic_types).intersection(self._discrete_types)) > 0
 
+        # make a copy of the inputs and clean out any missing data
+        feature_df = inputs.copy()
+        feature_df.dropna(inplace=True)
+
         # split out the target feature
-        target_df = inputs.iloc[:, target_idx]
+        target_df = feature_df.iloc[:, target_idx]
 
         # drop features that are not compatible with ranking
         feature_indices = set(utils.list_columns_with_semantic_types(inputs.metadata, self._semantic_types))
+        role_indices = set(utils.list_columns_with_semantic_types(inputs.metadata, self._roles))
+        feature_indices = feature_indices.intersection(role_indices)
+
         all_indices = set(range(0, inputs.shape[1]))
         skipped_indices = all_indices.difference(feature_indices)
         skipped_indices.add(target_idx)  # drop the target too
-        feature_df = inputs
         for i, v in enumerate(skipped_indices):
-            feature_df = feature_df.drop(inputs.columns[v], axis=1)
+            feature_df.drop(inputs.columns[v], axis=1, inplace=True)
 
         # figure out the discrete and continuous feature indices and create an array
         # that flags them
@@ -142,7 +153,6 @@ class MIRankingPrimitive(transformer.TransformerPrimitiveBase[container.DataFram
                 col_idx = feature_df.columns.get_loc(col_name)
                 discrete_flags[col_idx] = True
 
-        # convert to numpy data types
         target_np = target_df.values
         feature_np = feature_df.values
 
