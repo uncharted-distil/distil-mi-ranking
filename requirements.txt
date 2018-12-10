@@ -1,4 +1,5 @@
 pandas >= 0.22
 frozendict >= 1.2
-d3m
 scikit-learn
+git+https://gitlab.com/datadrivendiscovery/common-primitives.git@devel#egg=common_primitives --process-dependency-links
+git+https://gitlab.com/datadrivendiscovery/d3m.git@devel#egg=d3m --process-dependency-links
