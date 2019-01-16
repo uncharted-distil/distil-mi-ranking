@@ -7,9 +7,9 @@ setup(
     packages=['miranking'],
     keywords=['d3m_primitive'],
     install_requires=[
-        'pandas == 0.22.0',
-        'frozendict==1.2',
-        'scikit-learn',
+        'pandas>=0.22.0',
+        'frozendict>=1.2',
+        'scikit-learn>=0.20.2',
         'd3m',
         'common-primitives'
     ],

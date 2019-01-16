@@ -1,5 +1,5 @@
-pandas >= 0.22
-frozendict >= 1.2
-scikit-learn
+pandas>=0.22.0
+frozendict>=1.2
+scikit-learn>=0.20.2
 git+https://gitlab.com/datadrivendiscovery/common-primitives.git@devel#egg=common_primitives --process-dependency-links
 git+https://gitlab.com/datadrivendiscovery/d3m.git@devel#egg=d3m --process-dependency-links
