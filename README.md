@@ -5,7 +5,7 @@ Feature ranking based on a mutual information between features and a selected ta
 Deployment:
 
 ```shell
-pip install -e git+ssh://git@github.com/unchartedsoftware/distil-mi-ranking.git#egg=DistilMIRanking --process-dependency-links
+pip install -e git+ssh://git@github.com/uncharted-distil/distil-mi-ranking.git#egg=DistilMIRanking --process-dependency-links
 ```
 
 Development:
