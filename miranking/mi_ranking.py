@@ -91,7 +91,7 @@ class MIRankingPrimitive(transformer.TransformerPrimitiveBase[container.DataFram
             },
             'installation': [{
                 'type': metadata_base.PrimitiveInstallationType.PIP,
-                'package_uri': 'git+https://github.com/unchartedsoftware/distil-mi-ranking.git@' +
+                'package_uri': 'git+https://github.com/uncharted-distil/distil-mi-ranking.git@' +
                                '{git_commit}#egg=distil-mi-ranking'
                                .format(git_commit=d3m_utils.current_git_commit(os.path.dirname(__file__)),),
             }],
@@ -135,7 +135,7 @@ class MIRankingPrimitive(transformer.TransformerPrimitiveBase[container.DataFram
         if not self._can_use_column(inputs.metadata, target_idx):
             raise exceptions.InvalidArgumentValueError('column idx=' + str(target_idx) + ' from '
                                                        + str(inputs.columns)
-                                                       + ' does not contain continuous or discreet type')
+                                                       + ' does not contain continuous or discrete type')
 
         # check if target is discrete or continuous
         semantic_types = inputs.metadata.query_column(target_idx)['semantic_types']
