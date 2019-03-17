@@ -130,12 +130,12 @@ class MIRankingPrimitive(transformer.TransformerPrimitiveBase[container.DataFram
                 timeout: float = None,
                 iterations: int = None) -> base.CallResult[container.DataFrame]:
 
-        # make sure the target column is of a valid type
+        cols = ['idx', 'name', 'rank']
+
+        # Make sure the target column is of a valid type and return no ranked features if it isn't.
         target_idx = self.hyperparams['target_col_index']
         if not self._can_use_column(inputs.metadata, target_idx):
-            raise exceptions.InvalidArgumentValueError('column idx=' + str(target_idx) + ' from '
-                                                       + str(inputs.columns)
-                                                       + ' does not contain continuous or discrete type')
+            return base.CallResult(container.DataFrame(data={}, columns=cols))
 
         # check if target is discrete or continuous
         semantic_types = inputs.metadata.query_column(target_idx)['semantic_types']
@@ -152,6 +152,10 @@ class MIRankingPrimitive(transformer.TransformerPrimitiveBase[container.DataFram
         feature_indices = set(utils.list_columns_with_semantic_types(inputs.metadata, self._semantic_types))
         role_indices = set(utils.list_columns_with_semantic_types(inputs.metadata, self._roles))
         feature_indices = feature_indices.intersection(role_indices)
+
+        # return an empty result if all features were incompatible
+        if len(feature_indices) is 0:
+            return base.CallResult(container.DataFrame(data={}, columns=cols))
 
         all_indices = set(range(0, inputs.shape[1]))
         skipped_indices = all_indices.difference(feature_indices)
@@ -189,11 +193,10 @@ class MIRankingPrimitive(transformer.TransformerPrimitiveBase[container.DataFram
         data: typing.List[typing.Tuple[int, str, float]] = []
         data = self._append_rank_info(inputs, data, ranked_features_np, feature_df)
 
-        cols = ['idx', 'name', 'rank']
+        # wrap as a D3M container - metadata should be auto generated
         results = container.DataFrame(data=data, columns=cols)
         results = results.sort_values(by=['rank'], ascending=False).reset_index(drop=True)
 
-        # wrap as a D3M container - metadata should be auto generated
         return base.CallResult(results)
 
     @classmethod
@@ -215,12 +218,13 @@ class MIRankingPrimitive(transformer.TransformerPrimitiveBase[container.DataFram
 
         inputs_metadata = typing.cast(metadata_base.DataMetadata, arguments['inputs'])
 
-        # make sure target column is discrete or continuous (search if unspecified)
-        target_col_index = hyperparams['target_col_index']
-        if target_col_index is not None:
-            can_use_column = cls._can_use_column(inputs_metadata, target_col_index)
+        # make sure target column exists
+        if 'target_col_index' not in hyperparams:
+            return None
 
-        if not can_use_column:
+        target_col_index = hyperparams['target_col_index']
+        column_metadata = inputs_metadata.query((metadata_base.ALL_ELEMENTS, target_col_index))
+        if 'name' not in column_metadata:
             return None
 
         return inputs_metadata
