@@ -44,7 +44,7 @@ class MIRankingPrimitive(transformer.TransformerPrimitiveBase[container.DataFram
     """
     Feature ranking based on a mutual information between features and a selected
     target.  Will rank any feature column with a semantic type of Float, Boolean,
-    Integer or Categorical, and a corresponding structural type of int or float.
+    Integer or Categorical, and a corresponding structural type of int, float or str.
     Features that could not be ranked are excluded from the returned set.
     Parameters
     ----------
