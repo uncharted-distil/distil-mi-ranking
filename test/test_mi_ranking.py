@@ -22,7 +22,7 @@ import pandas as pd
 import numpy as np
 
 from d3m import container
-from d3m.primitives.distil import MIRanking
+from d3m.primitives.feature_selection.mutual_info_ranking import Distil as MIRanking
 from d3m.metadata import base as metadata_base
 
 
@@ -106,45 +106,13 @@ class MIRankingPrimitiveTestCase(unittest.TestCase):
         self.assertListEqual(list(result_dataframe['name']), [])
         self.assertListEqual(list(result_dataframe['rank']), [])
 
-    def test_can_accept(self) -> None:
-        dataframe = self._load_data()
-
-        hyperparams_class = \
-            MIRanking.metadata.query()['primitive_code']['class_type_arguments']['Hyperparams']
-        hyperparams = hyperparams_class.defaults().replace(
-            {
-                'target_col_index': 2
-            }
-        )
-        mi_ranking = MIRanking(hyperparams=hyperparams)
-        result = mi_ranking.can_accept(arguments={'inputs': dataframe.metadata},
-                                       method_name='produce',
-                                       hyperparams=hyperparams)
-        self.assertIsNotNone(result)
-
-    def test_can_accept_bad_index(self) -> None:
-        dataframe = self._load_data()
-
-        hyperparams_class = \
-            MIRanking.metadata.query()['primitive_code']['class_type_arguments']['Hyperparams']
-        hyperparams = hyperparams_class.defaults().replace(
-            {
-                'target_col_index': 10
-            }
-        )
-        mi_ranking = MIRanking(hyperparams=hyperparams)
-        result = mi_ranking.can_accept(arguments={'inputs': dataframe.metadata},
-                                       method_name='produce',
-                                       hyperparams=hyperparams)
-        self.assertIsNone(result)
-
     def _load_data(cls, bad_features: bool=False) -> container.DataFrame:
         dataset_doc_path = path.join(cls._dataset_path, 'datasetDoc.json')
 
         # load the dataset and convert resource 0 to a dataframe
         dataset = container.Dataset.load('file://{dataset_doc_path}'.format(dataset_doc_path=dataset_doc_path))
         dataframe = dataset['0']
-        dataframe.metadata = dataframe.metadata.set_for_value(dataframe)
+        dataframe.metadata = dataframe.metadata.generate(dataframe)
 
         if bad_features:
             for i in range(1, 6):

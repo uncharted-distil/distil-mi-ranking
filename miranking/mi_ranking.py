@@ -27,7 +27,6 @@ from sklearn.feature_selection import mutual_info_regression, mutual_info_classi
 from d3m import container, exceptions, utils as d3m_utils
 from d3m.metadata import base as metadata_base, hyperparams
 from d3m.primitive_interfaces import base, transformer
-from common_primitives import utils
 
 __all__ = ('MIRankingPrimitive',)
 
@@ -39,7 +38,6 @@ class Hyperparams(hyperparams.Hyperparams):
         description='Index of target feature to rank against.'
     )
 
-
 class MIRankingPrimitive(transformer.TransformerPrimitiveBase[container.DataFrame,
                                                               container.DataFrame,
                                                               Hyperparams]):
@@ -47,9 +45,13 @@ class MIRankingPrimitive(transformer.TransformerPrimitiveBase[container.DataFram
     Feature ranking based on a mutual information between features and a selected
     target.  Will rank any feature column with a semantic type of Float, Boolean,
     Integer or Categorical, and a corresponding structural type of int or float.
-    A DataFrame containing (col_idx, col_name, score) tuples for each ranked feature
-    will be returned to the caller.  Features that could not be ranked are excluded
-    from the returned set.
+    Features that could not be ranked are excluded from the returned set.
+    Parameters
+    ----------
+    inputs : A container.Dataframe with columns containing numeric or string data.
+    Returns
+    -------
+    output : A DataFrame containing (col_idx, col_name, score) tuples for each ranked feature.
     """
 
     # allowable target column types
@@ -81,13 +83,14 @@ class MIRankingPrimitive(transformer.TransformerPrimitiveBase[container.DataFram
     metadata = metadata_base.PrimitiveMetadata(
         {
             'id': 'a31b0c26-cca8-4d54-95b9-886e23df8886',
-            'version': '0.1.0',
+            'version': '0.2.0',
             'name': 'Mutual Information Feature Ranking',
-            'python_path': 'd3m.primitives.distil.MIRanking',
+            'python_path': 'd3m.primitives.feature_selection.mutual_info_ranking.Distil',
             'keywords': ['vector', 'columns', 'dataframe'],
             'source': {
                 'name': 'Uncharted Software',
-                'contact': 'mailto:cbethune@uncharted.software'
+                'contact': 'mailto:cbethune@uncharted.software',
+                'uris': ['http://github.com/uncharted-distil/distil-mi-ranking']
             },
             'installation': [{
                 'type': metadata_base.PrimitiveInstallationType.PIP,
@@ -96,9 +99,9 @@ class MIRankingPrimitive(transformer.TransformerPrimitiveBase[container.DataFram
                                .format(git_commit=d3m_utils.current_git_commit(os.path.dirname(__file__)),),
             }],
             'algorithm_types': [
-                metadata_base.PrimitiveAlgorithmType.DATA_CONVERSION,
+                metadata_base.PrimitiveAlgorithmType.MUTUAL_INFORMATION,
             ],
-            'primitive_family': metadata_base.PrimitiveFamily.DATA_TRANSFORMATION,
+            'primitive_family': metadata_base.PrimitiveFamily.DATA_PREPROCESSING,
         }
     )
 
@@ -149,8 +152,8 @@ class MIRankingPrimitive(transformer.TransformerPrimitiveBase[container.DataFram
         target_df = feature_df.iloc[:, target_idx]
 
         # drop features that are not compatible with ranking
-        feature_indices = set(utils.list_columns_with_semantic_types(inputs.metadata, self._semantic_types))
-        role_indices = set(utils.list_columns_with_semantic_types(inputs.metadata, self._roles))
+        feature_indices = set(inputs.metadata.list_columns_with_semantic_types(self._semantic_types))
+        role_indices = set(inputs.metadata.list_columns_with_semantic_types(self._roles))
         feature_indices = feature_indices.intersection(role_indices)
 
         # return an empty result if all features were incompatible
@@ -165,7 +168,7 @@ class MIRankingPrimitive(transformer.TransformerPrimitiveBase[container.DataFram
 
         # figure out the discrete and continuous feature indices and create an array
         # that flags them
-        discrete_indices = utils.list_columns_with_semantic_types(inputs.metadata, self._discrete_types)
+        discrete_indices = inputs.metadata.list_columns_with_semantic_types(self._discrete_types)
         discrete_flags = [False] * feature_df.shape[1]
         for v in discrete_indices:
             col_name = inputs.columns[v]
@@ -198,33 +201,3 @@ class MIRankingPrimitive(transformer.TransformerPrimitiveBase[container.DataFram
         results = results.sort_values(by=['rank'], ascending=False).reset_index(drop=True)
 
         return base.CallResult(results)
-
-    @classmethod
-    def can_accept(cls, *,
-                   method_name: str,
-                   arguments: typing.Dict[str, typing.Union[metadata_base.Metadata, type]],
-                   hyperparams: Hyperparams) -> typing.Optional[metadata_base.DataMetadata]:
-        output_metadata = super().can_accept(method_name=method_name, arguments=arguments, hyperparams=hyperparams)
-
-        # If structural types didn't match, don't bother.
-        if output_metadata is None:
-            return None
-
-        if method_name != 'produce':
-            return output_metadata
-
-        if 'inputs' not in arguments:
-            return output_metadata
-
-        inputs_metadata = typing.cast(metadata_base.DataMetadata, arguments['inputs'])
-
-        # make sure target column exists
-        if 'target_col_index' not in hyperparams:
-            return None
-
-        target_col_index = hyperparams['target_col_index']
-        column_metadata = inputs_metadata.query((metadata_base.ALL_ELEMENTS, target_col_index))
-        if 'name' not in column_metadata:
-            return None
-
-        return inputs_metadata
