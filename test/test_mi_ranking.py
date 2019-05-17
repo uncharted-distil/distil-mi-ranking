@@ -22,7 +22,7 @@ import pandas as pd
 import numpy as np
 
 from d3m import container
-from d3m.primitives.feature_selection.mutual_info_ranking import Distil as MIRanking
+from d3m.primitives.feature_selection.mi_ranking import DistilMIRanking as MIRanking
 from d3m.metadata import base as metadata_base
 
 

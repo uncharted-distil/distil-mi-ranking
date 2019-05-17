@@ -14,7 +14,7 @@ setup(
     ],
     entry_points={
         'd3m.primitives': [
-            'feature_selection.mutual_info_ranking.Distil = miranking.mi_ranking:MIRankingPrimitive'
+            'feature_selection.mi_ranking.DistilMIRanking = miranking.mi_ranking:MIRankingPrimitive'
         ],
     }
 )

@@ -85,7 +85,7 @@ class MIRankingPrimitive(transformer.TransformerPrimitiveBase[container.DataFram
             'id': 'a31b0c26-cca8-4d54-95b9-886e23df8886',
             'version': '0.2.0',
             'name': 'Mutual Information Feature Ranking',
-            'python_path': 'd3m.primitives.feature_selection.mutual_info_ranking.Distil',
+            'python_path': 'd3m.primitives.feature_selection.mi_ranking.DistilMIRanking',
             'keywords': ['vector', 'columns', 'dataframe'],
             'source': {
                 'name': 'Uncharted Software',
