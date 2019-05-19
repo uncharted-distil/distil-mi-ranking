@@ -67,6 +67,8 @@ class MIRankingPrimitive(transformer.TransformerPrimitiveBase[container.DataFram
 
     _roles = (
         'https://metadata.datadrivendiscovery.org/types/Attribute',
+        'https://metadata.datadrivendiscovery.org/types/Target',
+        'https://metadata.datadrivendiscovery.org/types/TrueTarget',
         'https://metadata.datadrivendiscovery.org/types/SuggestedTarget',
     )
 
@@ -83,7 +85,7 @@ class MIRankingPrimitive(transformer.TransformerPrimitiveBase[container.DataFram
     metadata = metadata_base.PrimitiveMetadata(
         {
             'id': 'a31b0c26-cca8-4d54-95b9-886e23df8886',
-            'version': '0.2.0',
+            'version': '0.2.1',
             'name': 'Mutual Information Feature Ranking',
             'python_path': 'd3m.primitives.feature_selection.mi_ranking.DistilMIRanking',
             'keywords': ['vector', 'columns', 'dataframe'],
@@ -155,6 +157,7 @@ class MIRankingPrimitive(transformer.TransformerPrimitiveBase[container.DataFram
         feature_indices = set(inputs.metadata.list_columns_with_semantic_types(self._semantic_types))
         role_indices = set(inputs.metadata.list_columns_with_semantic_types(self._roles))
         feature_indices = feature_indices.intersection(role_indices)
+        feature_indices.remove(target_idx)
 
         # return an empty result if all features were incompatible
         if len(feature_indices) is 0:
@@ -162,7 +165,6 @@ class MIRankingPrimitive(transformer.TransformerPrimitiveBase[container.DataFram
 
         all_indices = set(range(0, inputs.shape[1]))
         skipped_indices = all_indices.difference(feature_indices)
-        skipped_indices.add(target_idx)  # drop the target too
         for i, v in enumerate(skipped_indices):
             feature_df.drop(inputs.columns[v], axis=1, inplace=True)
 
@@ -197,7 +199,7 @@ class MIRankingPrimitive(transformer.TransformerPrimitiveBase[container.DataFram
         data = self._append_rank_info(inputs, data, ranked_features_np, feature_df)
 
         # wrap as a D3M container - metadata should be auto generated
-        results = container.DataFrame(data=data, columns=cols)
+        results = container.DataFrame(data=data, columns=cols, generate_metadata=True)
         results = results.sort_values(by=['rank'], ascending=False).reset_index(drop=True)
 
         return base.CallResult(results)

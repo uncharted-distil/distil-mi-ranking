@@ -71,7 +71,7 @@ class MIRankingPrimitiveTestCase(unittest.TestCase):
             self.assertAlmostEqual(r, expected_ranks[i], places=6)
 
     def test_incompatible_target(self) -> None:
-        dataframe = self._load_data()
+        dataframe = self._load_data(bad_features=[4])
 
         hyperparams_class = \
             MIRanking.metadata.query()['primitive_code']['class_type_arguments']['Hyperparams']
@@ -89,13 +89,13 @@ class MIRankingPrimitiveTestCase(unittest.TestCase):
         self.assertListEqual(list(result_dataframe['rank']), [])
 
     def test_incompatible_features(self) -> None:
-        dataframe = self._load_data(bad_features=True)
+        dataframe = self._load_data(bad_features=[2, 3, 5])
 
         hyperparams_class = \
             MIRanking.metadata.query()['primitive_code']['class_type_arguments']['Hyperparams']
         hyperparams = hyperparams_class.defaults().replace(
             {
-                'target_col_index': 2
+                'target_col_index': 1
             }
         )
         mi_ranking = MIRanking(hyperparams=hyperparams)
@@ -106,7 +106,7 @@ class MIRankingPrimitiveTestCase(unittest.TestCase):
         self.assertListEqual(list(result_dataframe['name']), [])
         self.assertListEqual(list(result_dataframe['rank']), [])
 
-    def _load_data(cls, bad_features: bool=False) -> container.DataFrame:
+    def _load_data(cls, bad_features: typing.Sequence[int]=[]) -> container.DataFrame:
         dataset_doc_path = path.join(cls._dataset_path, 'datasetDoc.json')
 
         # load the dataset and convert resource 0 to a dataframe
@@ -114,40 +114,40 @@ class MIRankingPrimitiveTestCase(unittest.TestCase):
         dataframe = dataset['0']
         dataframe.metadata = dataframe.metadata.generate(dataframe)
 
-        if bad_features:
-            for i in range(1, 6):
-                dataframe.metadata = dataframe.metadata.update((metadata_base.ALL_ELEMENTS, i),
-                                                               {'structural_type': str})
-            for i in range(1, 6):
-                dataframe.metadata = dataframe.metadata.\
-                    add_semantic_type((metadata_base.ALL_ELEMENTS, i), 'http://schema.org/Text')
-        else:
-            # set the struct type
-            dataframe.metadata = dataframe.metadata.update((metadata_base.ALL_ELEMENTS, 0),
-                                                           {'structural_type': int})
-            dataframe.metadata = dataframe.metadata.update((metadata_base.ALL_ELEMENTS, 1),
-                                                           {'structural_type': int})
-            dataframe.metadata = dataframe.metadata.update((metadata_base.ALL_ELEMENTS, 2),
-                                                           {'structural_type': float})
-            dataframe.metadata = dataframe.metadata.update((metadata_base.ALL_ELEMENTS, 3),
-                                                           {'structural_type': int})
-            dataframe.metadata = dataframe.metadata.update((metadata_base.ALL_ELEMENTS, 4),
-                                                           {'structural_type': str})
-            dataframe.metadata = dataframe.metadata.update((metadata_base.ALL_ELEMENTS, 5),
-                                                           {'structural_type': int})
+        # set the struct type
+        dataframe.metadata = dataframe.metadata.update((metadata_base.ALL_ELEMENTS, 0),
+                                                        {'structural_type': int})
+        dataframe.metadata = dataframe.metadata.update((metadata_base.ALL_ELEMENTS, 1),
+                                                        {'structural_type': int})
+        dataframe.metadata = dataframe.metadata.update((metadata_base.ALL_ELEMENTS, 2),
+                                                        {'structural_type': float})
+        dataframe.metadata = dataframe.metadata.update((metadata_base.ALL_ELEMENTS, 3),
+                                                        {'structural_type': int})
+        dataframe.metadata = dataframe.metadata.update((metadata_base.ALL_ELEMENTS, 4),
+                                                        {'structural_type': str})
+        dataframe.metadata = dataframe.metadata.update((metadata_base.ALL_ELEMENTS, 5),
+                                                        {'structural_type': int})
 
-            # set the semantic type
-            dataframe.metadata = dataframe.metadata.\
-                add_semantic_type((metadata_base.ALL_ELEMENTS, 1),
-                                'https://metadata.datadrivendiscovery.org/types/CategoricalData')
-            dataframe.metadata = dataframe.metadata.\
-                add_semantic_type((metadata_base.ALL_ELEMENTS, 2), 'http://schema.org/Float')
-            dataframe.metadata = dataframe.metadata.\
-                add_semantic_type((metadata_base.ALL_ELEMENTS, 3), 'http://schema.org/Boolean')
-            dataframe.metadata = dataframe.metadata.\
-                add_semantic_type((metadata_base.ALL_ELEMENTS, 4), 'http://schema.org/Text')
-            dataframe.metadata = dataframe.metadata.\
-                add_semantic_type((metadata_base.ALL_ELEMENTS, 5), 'http://schema.org/Integer')
+        # set the semantic type
+        dataframe.metadata = dataframe.metadata.\
+            add_semantic_type((metadata_base.ALL_ELEMENTS, 1),
+                            'https://metadata.datadrivendiscovery.org/types/CategoricalData')
+        dataframe.metadata = dataframe.metadata.\
+            add_semantic_type((metadata_base.ALL_ELEMENTS, 2), 'http://schema.org/Float')
+        dataframe.metadata = dataframe.metadata.\
+            add_semantic_type((metadata_base.ALL_ELEMENTS, 3), 'http://schema.org/Boolean')
+        dataframe.metadata = dataframe.metadata.\
+            add_semantic_type((metadata_base.ALL_ELEMENTS, 4), 'http://schema.org/Text')
+        dataframe.metadata = dataframe.metadata.\
+            add_semantic_type((metadata_base.ALL_ELEMENTS, 5), 'http://schema.org/Integer')
+
+        # override with incompatible features
+        for i in bad_features:
+            dataframe.metadata = dataframe.metadata.update((metadata_base.ALL_ELEMENTS, i),
+                                                            {'structural_type': str})
+        for i in bad_features:
+            dataframe.metadata = dataframe.metadata.update((metadata_base.ALL_ELEMENTS, i),
+                                                            {'semantic_types': ['http://schema.org/Text']})
 
         # set the roles
         for i in range(1, 6):
