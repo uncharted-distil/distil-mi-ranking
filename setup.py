@@ -10,7 +10,7 @@ setup(
         'pandas>=0.23.4',
         'frozendict>=1.2',
         'scikit-learn>=0.20.2',
-        'd3m==2019.4.4'
+        'd3m'
     ],
     entry_points={
         'd3m.primitives': [
