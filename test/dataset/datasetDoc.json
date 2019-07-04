@@ -53,7 +53,7 @@
         {
           "colIndex": 4,
           "colName": "delta",
-          "colType": "text",
+          "colType": "string",
           "role": [
             "attribute"
           ]
