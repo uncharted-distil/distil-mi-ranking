@@ -112,7 +112,7 @@ class MIRankingPrimitive(transformer.TransformerPrimitiveBase[container.DataFram
 
         column_metadata = inputs_metadata.query((metadata_base.ALL_ELEMENTS, column_index))
 
-        valid_struct_type = column_metadata.get('structural_type', []) in cls._structural_types
+        valid_struct_type = column_metadata.get('structural_type', None) in cls._structural_types
         semantic_types = column_metadata.get('semantic_types', [])
         valid_semantic_type = len(set(cls._semantic_types).intersection(semantic_types)) > 0
         valid_role_type = len(set(cls._roles).intersection(semantic_types)) > 0
