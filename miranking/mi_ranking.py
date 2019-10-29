@@ -18,6 +18,7 @@ import typing
 import os
 import csv
 import collections
+import sys
 
 import frozendict  # type: ignore
 import pandas as pd  # type: ignore
@@ -175,8 +176,12 @@ class MIRankingPrimitive(transformer.TransformerPrimitiveBase[container.DataFram
         for v in discrete_indices:
             col_name = inputs.columns[v]
             if col_name in feature_df:
-                col_idx = feature_df.columns.get_loc(col_name)
-                discrete_flags[col_idx] = True
+                # only mark columns with a least 1 duplicate value as discrete when predicting
+                # a continuous target - there's a check in the bowels of MI code that will throw
+                # an exception otherwise
+                if feature_df[col_name].duplicated().any() and not discrete:
+                    col_idx = feature_df.columns.get_loc(col_name)
+                    discrete_flags[col_idx] = True
 
         target_np = target_df.values
         feature_np = feature_df.values
